@@ -15,7 +15,7 @@ class ReportDiffCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'config:report-diff {start : First date to compare} {end? : Last date to compare, defaults to today}';
+    protected $signature = 'config:report-diff {start : First date to compare} {end? : Last date to compare, defaults to today} {--resource-types-only : Return a list of resource types involved instead of the diff}';
 
     /**
      * The console command description.
@@ -38,7 +38,11 @@ class ReportDiffCommand extends Command
         $this->end = Carbon::parse($this->argument('end', now()));
 
         $data = $this->retrieveData();
-        $this->printResult($data);
+        if ($this->options('resource-types-only')) {
+            $this->printTypes($data);
+        } else {
+            $this->printResult($data);
+        }
 
         return Command::SUCCESS;
     }
@@ -151,6 +155,15 @@ class ReportDiffCommand extends Command
                 });
             }
             $this->newline();
+        });
+    }
+
+    protected function printTypes($data)
+    {
+        $this->line('Resource types that have been changed between '.$this->start->format("YYYY-MM-DD").' and '.$this->end->format("YYYY-MM-DD").':');
+        $types = $data->pluck('type')->unique();
+        $types->each(function ($type) {
+            $this->info($type);
         });
     }
 }
